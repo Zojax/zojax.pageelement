@@ -1,0 +1,85 @@
+=======
+CHANGES
+=======
+
+1.4.0 (2009-07-14)
+------------------
+
+- Added updateAndRender method, update and render
+
+- Use chameleon zpt for page element template
+
+- Added 'pageelement' expression for chameleon
+
+- Copyright changed to 'Zope Foundation and Contributors'
+
+
+1.3.2 (2009-03-11)
+------------------
+
+- Removed ParentPageElement adapter, pageelement always accept manager in __init__
+
+
+1.3.1 (2008-12-22)
+------------------
+
+- Register IPageElementView as IPageletType
+
+
+1.3.0 (2008-11-16)
+------------------
+
+- Removed `element` attribute
+
+- Use `weight` for sorting instead of order
+
+
+1.2.4 (2008-10-23)
+------------------
+
+- 'title' and 'description' attributes are MessageID field
+   for zojax:pageelement directive 
+
+
+1.2.3 (2008-09-30)
+------------------
+
+- Fixed pageelement registration for multiple layers
+
+
+1.2.2 (2008-09-25)
+------------------
+
+- Added IPageElementView, it uses for custom page element renderer
+
+
+1.2.1 (2008-08-28)
+------------------
+
+- Added `manager` directive attribute
+
+- Log missing page element
+
+- Log page element exceptions
+
+
+1.2.0 (2008-08-13)
+------------------
+
+- API refactored
+
+- Added <zojax:pageelement/> zcml directive
+
+
+1.0.1 (2008-07-28)
+------------------
+
+- Added 'Back' button to configuration form
+
+
+1.0.0 (2008-05-13)
+------------------
+
+- Split code from zojax.ui.page package
+
+- Tests

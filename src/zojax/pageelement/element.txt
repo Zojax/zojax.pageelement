@@ -1,0 +1,191 @@
+===========
+PageElement
+===========
+
+Создадим PageElement:::
+
+  >>> from zope import interface, component
+  >>> from zope.interface import Interface
+  >>> from zojax.pageelement import interfaces
+  >>> from zojax.pageelement.element import PageElement
+  >>> from zojax.pageelement.interfaces import IPageElement
+
+  >>> siteManager = component.getSiteManager()
+
+  >>> class IMyPageElement(interfaces.IPageElement):
+  ...     pass
+
+  >>> class MyPageElement(PageElement):
+  ...     interface.implements(IMyPageElement)
+  ...     
+  ...     __name__ = 'myPageElement'
+
+Нам нужен контекстный обьект, `view` и `request`::
+
+  >>> class Content(object):
+  ...     interface.implements(interface.Interface)
+  >>> content = Content()
+
+  >>> from zope.publisher.browser import TestRequest
+  >>> request = TestRequest()
+
+  >>> from zope.publisher.interfaces.browser import IBrowserView
+  >>> class View(object):
+  ...     interface.implements(IBrowserView)
+  ...     def __init__(self, context, request):
+  ...         pass
+  >>> view = View(content, request)
+
+  >>> element = MyPageElement(content, request, view)
+
+  >>> siteManager.registerAdapter(
+  ...     MyPageElement,
+  ...     (interface.Interface, interface.Interface, interface.Interface),
+  ...     IMyPageElement, name='myPageElement')
+
+
+Изначально элемент возвращает пустую строку::
+
+  >>> element.update()
+  >>> element.render()
+  u''
+
+Теперь создадим несколько вложенных PageElement::
+
+  >>> class Item1(PageElement):
+  ...     title = u'Item1'
+  ...     weight = 1
+  ...     def render(self):
+  ...         return u'<div>%s</div>'%self.title
+
+  >>> class Item2(PageElement):
+  ...     title = u'Item2'
+  ...     weight = 3
+  ...     def render(self):
+  ...         return u'<div>%s</div>'%self.title
+
+  >>> class Item3(PageElement):
+  ...     title = u'Item3'
+  ...     weight = 2
+  ...     available = True
+  ...     def render(self):
+  ...         return u'<div>%s</div>'%self.title
+  ...     def isAvailable(self):
+  ...         return self.available
+
+  >>> siteManager.registerAdapter(
+  ...     Item1, (Interface, Interface, Interface), IPageElement, name='item1')
+
+  >>> siteManager.registerAdapter(
+  ...     Item1, (Interface, Interface, Interface, MyPageElement),
+  ...     IPageElement, name='item1')
+
+  >>> siteManager.registerAdapter(
+  ...     Item2, (Interface, Interface, Interface), IPageElement, name='item2')
+
+  >>> siteManager.registerAdapter(
+  ...     Item2, (Interface, Interface, Interface, MyPageElement),
+  ...     IPageElement, name='item2')
+
+  >>> siteManager.registerAdapter(
+  ...     Item3, (Interface, Interface, Interface), IPageElement, name='item3')
+
+  >>> siteManager.registerAdapter(
+  ...     Item3, (Interface, Interface, Interface, MyPageElement),
+  ...     IPageElement, name='item3')
+
+  >>> element.update()
+  >>> print element.render()
+  <div>Item1</div>
+  <div>Item3</div>
+  <div>Item2</div>
+
+isAvailable
+
+  >>> Item3.available = False
+  >>> element.update()
+  >>> print element.render()
+  <div>Item1</div>
+  <div>Item2</div>
+
+  >>> Item3.available = True
+
+
+Unregister manager
+
+  >>> status = siteManager.unregisterAdapter(
+  ...     MyPageElement,
+  ...     (interface.Interface, interface.Interface, interface.Interface),
+  ...     interfaces.IPageElement, name='myPageElement')
+
+
+
+===========================
+zojax:pageelement directive
+===========================
+
+  >>> from zope.configuration import xmlconfig
+  >>> import zojax.pageelement
+  >>> context = xmlconfig.file('meta.zcml', zojax.pageelement)
+
+  >>> class IPortalHeader(IPageElement):
+  ...     pass
+
+  >>> context = xmlconfig.string("""
+  ... <configure xmlns:zojax="http://namespaces.zope.org/zojax">
+  ...   <zojax:pageelement
+  ...      name="portal.header"
+  ...      provides="zojax.pageelement.TESTS.IPortalHeader" />
+  ... </configure>""", context)
+
+  >>> element = component.getMultiAdapter(
+  ...     (content, request, view), IPageElement, name='portal.header')
+
+  >>> element
+  <zojax.pageelement.zcml.<PageElement portal.header> object at ...>
+
+  >>> context = xmlconfig.string("""
+  ... <configure xmlns:zojax="http://namespaces.zope.org/zojax">
+  ...    <zojax:pageelement
+  ...        title="Item1"
+  ...        name="portal.header.item1"
+  ...        class="zojax.pageelement.TESTS.Item1"
+  ...        for="zojax.pageelement.TESTS.Content"
+  ...        view="zojax.pageelement.TESTS.View"
+  ...        manager="zojax.pageelement.TESTS.IPortalHeader"
+  ...        weight="100" />
+  ...    <zojax:pageelement
+  ...        title="Item2"
+  ...        name="portal.header.item2"
+  ...        class="zojax.pageelement.TESTS.Item2"
+  ...        view="zojax.pageelement.TESTS.View"
+  ...        manager="zojax.pageelement.TESTS.IPortalHeader"
+  ...        weight="1" />
+  ... </configure>""", context)
+
+Both page elements registered with weak link to parent page element
+
+  >>> element.update()
+  >>> print element.render()
+  <div>Item2</div>
+  <div>Item1</div>
+
+Strong link to parent page element, `manager` is interface or class.
+But parent page element is not available in child page element!
+
+  >>> context = xmlconfig.string("""
+  ... <configure xmlns:zojax="http://namespaces.zope.org/zojax">
+  ...    <zojax:pageelement
+  ...        title="Item3"
+  ...        name="portal.header.item3"
+  ...        class="zojax.pageelement.TESTS.Item3"
+  ...        view="zojax.pageelement.TESTS.View"
+  ...        manager="zojax.pageelement.TESTS.IPortalHeader"
+  ...        weight="2" /> 
+  ... </configure>""", context)
+
+  >>> element.update()
+  >>> print element.render()
+  <div>Item2</div>
+  <div>Item3</div>
+  <div>Item1</div>

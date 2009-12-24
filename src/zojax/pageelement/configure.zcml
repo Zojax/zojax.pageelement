@@ -1,0 +1,19 @@
+<configure
+   xmlns="http://namespaces.zope.org/zope"
+   xmlns:zojax="http://namespaces.zope.org/zojax"
+   xmlns:tales="http://namespaces.zope.org/tales">
+
+  <tales:expressiontype
+     name="pageelement"
+     handler=".tales.TALESPageelementExpression" />
+
+  <zojax:pageletType
+     name="pageelement.view"
+     interface=".interfaces.IPageElementView" />
+
+  <!-- pagelet: chameleon expression -->
+  <utility
+     name="pageelement"
+     factory=".tales.PageelementTranslator" />
+
+</configure>
